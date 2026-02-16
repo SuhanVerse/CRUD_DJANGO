@@ -53,7 +53,6 @@ body {
     }
 }
 
-/* Toast Notification */
 #toast {
     position: fixed;
     bottom: 2rem;
