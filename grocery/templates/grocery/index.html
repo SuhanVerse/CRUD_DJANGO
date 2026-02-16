@@ -1,0 +1,63 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grocery Bud - Django</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="{% static 'grocery/css/global.css' %}" />
+    <link rel="stylesheet" href="{% static 'grocery/css/global.css' %}" />
+    <link rel="stylesheet" href="{% static 'grocery/css/single-item.css' %}" />
+    <link rel="stylesheet" href="{% static 'grocery/css/items.css' %}" />
+  </head>
+  <body>
+    <section class="section-center">
+      <div class="items">
+        <div class="single-item">
+          <input type="checkbox" checked />
+          <p style="text-decoration: line-through">milk</p>
+          <a href="#" class="btn icon-btn edit-btn">
+            <i class="fa-regular fa-pen-to-square"></i>
+          </a>
+          <button class="btn icon-btn remove-btn" type="submit">
+            <i class="fa-regular fa-trash-can"></i>
+          </button>
+        </div>
+        <div class="single-item">
+          <input type="checkbox" checked />
+          <p style="text-decoration: line-through">bread</p>
+          <a href="#" class="btn icon-btn edit-btn">
+            <i class="fa-regular fa-pen-to-square"></i>
+          </a>
+          <button class="btn icon-btn remove-btn" type="submit">
+            <i class="fa-regular fa-trash-can"></i>
+          </button>
+        </div>
+        <div class="single-item">
+          <input type="checkbox" />
+          <p style="text-decoration: none">eggs</p>
+          <a href="#" class="btn icon-btn edit-btn">
+            <i class="fa-regular fa-pen-to-square"></i>
+          </a>
+          <button class="btn icon-btn remove-btn" type="submit">
+            <i class="fa-regular fa-trash-can"></i>
+          </button>
+        </div>
+        <div class="single-item">
+          <input type="checkbox" />
+          <p style="text-decoration: none">butter</p>
+          <a href="#" class="btn icon-btn edit-btn">
+            <i class="fa-regular fa-pen-to-square"></i>
+          </a>
+          <button class="btn icon-btn remove-btn" type="submit">
+            <i class="fa-regular fa-trash-can"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>
