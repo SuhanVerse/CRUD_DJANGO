@@ -1,3 +1,6 @@
 from django.shortcuts import render
 
-# Create your views here.
+
+def index(request):
+    """Display all grocery items"""
+    return render(request, 'grocery/index.html')
