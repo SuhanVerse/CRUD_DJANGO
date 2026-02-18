@@ -32,21 +32,24 @@
         <section class="section-center">
             <!-- Form -->
             <form
-                class="grocery-form"
                 method="POST"
-                action="{% url 'grocery:add' %}"
+                action="{% if edit_item %}{% url 'grocery:update' edit_item.id %}{% else %}{% url 'grocery:add' %}{% endif %}"
             >
                 {% csrf_token %}
                 <h2>Grocery BUD</h2>
                 <div class="form-control">
                     <input
                         type="text"
-                        class="form-input"
-                        placeholder="eg. Eggs"
                         name="name"
-                        required
+                        class="form-input"
+                        placeholder="e.g. eggs"
+                        value="{{ edit_item.name|default:'' }}"
+                        {% if edit_item %}autofocus{% endif %} 
                     />
-                    <button type="submit" class="form-submit">Add item</button>
+                    <button type="submit" class="form-submit">
+                        {% if edit_item %} edit item {% else %} add item 
+                        {% endif %}
+                    </button>
                 </div>
             </form>
 
@@ -83,7 +86,12 @@
                     </p>
 
                     <!-- Edit Button (placeholder for now) -->
-                    <a href="#" class="btn icon-btn edit-btn" title="Edit item">
+
+                    <a
+                        href="{% url 'grocery:edit' item.id %}"
+                        title="Edit item"
+                        class="btn icon-btn edit-btn"
+                    >
                         <i class="fa-regular fa-pen-to-square"></i>
                     </a>
 
