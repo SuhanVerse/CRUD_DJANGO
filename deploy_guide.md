@@ -198,31 +198,31 @@ This file lets Render auto-configure both your web service and database:
 
 ```yaml
 databases:
-    - name: grocery-db
-      databaseName: grocery_bud
-      user: grocery_user
-      plan: free
+  - name: grocery-db
+    databaseName: grocery_bud
+    user: grocery_user
+    plan: free
 
 services:
-    - type: web
-      name: grocery-bud
-      env: python
-      plan: free
-      buildCommand: "./build.sh"
-      startCommand: "gunicorn config.wsgi:application"
-      envVars:
-          - key: DATABASE_URL
-            fromDatabase:
-                name: grocery-db
-                property: connectionString
-          - key: SECRET_KEY
-            generateValue: true
-          - key: DEBUG
-            value: false
-          - key: ALLOWED_HOSTS
-            value: ".onrender.com"
-          - key: PYTHON_VERSION
-            value: "3.11.0"
+  - type: web
+    name: grocery-bud
+    env: python
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn config.wsgi:application"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: grocery-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: false
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: PYTHON_VERSION
+        value: "3.12.0"
 ```
 
 ---
