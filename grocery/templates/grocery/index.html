@@ -1,76 +1,129 @@
 {% load static %}
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Grocery Bud - Django</title>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Grocery Bud - Django</title>
 
-    <!-- Favicon -->
-     <link rel="shortcut icon" href="{% static 'grocery/images/favicon.ico' %}" type="image/x-icon">
+        <!-- Favicon -->
+        <link
+            rel="shortcut icon"
+            href="{% static 'grocery/images/favicon.ico' %}"
+            type="image/x-icon"
+        />
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+        <!-- Font Awesome -->
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        />
 
-    <!-- Project Styles -->
-    <link rel="stylesheet" href="{% static 'grocery/css/global.css' %}" />
-    <link rel="stylesheet" href="{% static 'grocery/css/items.css' %}" />
-    <link rel="stylesheet" href="{% static 'grocery/css/single-item.css' %}" />
-  </head>
-  <body>
-    <section class="section-center">
-      <!-- Items List -->
-      <div class="items">
-        {% for item in items %}
-        <div class="single-item {% if item.completed %}completed{% endif %}">
-          <!-- Toggle Completed -->
-          <form method="POST" action="{% url 'grocery:toggle' item.id %}" style="display:inline;">
-            {% csrf_token %}
-            <input type="checkbox"
-                   {% if item.completed %}checked{% endif %}
-                   onchange="this.form.submit()" />
-          </form>
+        <!-- Project Styles -->
+        <link rel="stylesheet" href="{% static 'grocery/css/global.css' %}" />
+        <link rel="stylesheet" href="{% static 'grocery/css/items.css' %}" />
+        <link
+            rel="stylesheet"
+            href="{% static 'grocery/css/single-item.css' %}"
+        />
+        <link rel="stylesheet" href="{% static 'grocery/css/form.css' %}" />
+    </head>
+    <body>
+        <section class="section-center">
+            <!-- Form -->
+            <form
+                class="grocery-form"
+                method="POST"
+                action="{% url 'grocery:add' %}"
+            >
+                {% csrf_token %}
+                <h2>Grocery BUD</h2>
+                <div class="form-control">
+                    <input
+                        type="text"
+                        class="form-input"
+                        placeholder="eg. Eggs"
+                        name="name"
+                        required
+                    />
+                    <button type="submit" class="form-submit">Add item</button>
+                </div>
+            </form>
 
-          <!-- Item Name -->
-          <p style="text-decoration: {% if item.completed %}line-through{% else %}none{% endif %}">
-            {{ item.name }}
-          </p>
+            <!-- Items List -->
+            <div class="items">
+                {% for item in items %}
+                <div
+                    class="single-item {% if item.completed %}completed{% endif %}"
+                >
+                    <!-- Toggle Completed -->
+                    <form
+                        method="POST"
+                        action="{% url 'grocery:toggle' item.id %}"
+                        style="display: inline"
+                    >
+                        {% csrf_token %}
+                        <input
+                            type="checkbox"
+                            {%
+                            if
+                            item.completed
+                            %}checked{%
+                            endif
+                            %}
+                            onchange="this.form.submit()"
+                        />
+                    </form>
 
-          <!-- Edit Button (placeholder for now) -->
-          <a href="#" class="btn icon-btn edit-btn" title="Edit item">
-            <i class="fa-regular fa-pen-to-square"></i>
-          </a>
+                    <!-- Item Name -->
+                    <p
+                        style="text-decoration: {% if item.completed %}line-through{% else %}none{% endif %}"
+                    >
+                        {{ item.name }}
+                    </p>
 
-          <!-- Delete Button -->
-          <form method="POST" action="{% url 'grocery:delete' item.id %}" style="display:inline;">
-            {% csrf_token %}
-            <button type="submit" class="btn icon-btn remove-btn" title="Delete item">
-              <i class="fa-regular fa-trash-can"></i>
-            </button>
-          </form>
-        </div>
-        {% empty %}
-        <p style="text-align:center; color:var(--color-text-muted);">
-          No items yet. Add one above!
-        </p>
-        {% endfor %}
-      </div>
-    </section>
+                    <!-- Edit Button (placeholder for now) -->
+                    <a href="#" class="btn icon-btn edit-btn" title="Edit item">
+                        <i class="fa-regular fa-pen-to-square"></i>
+                    </a>
 
-    <!-- Toast Container -->
-    <div id="toast"></div>
+                    <!-- Delete Button -->
+                    <form
+                        method="POST"
+                        action="{% url 'grocery:delete' item.id %}"
+                        style="display: inline"
+                    >
+                        {% csrf_token %}
+                        <button
+                            type="submit"
+                            class="btn icon-btn remove-btn"
+                            title="Delete item"
+                        >
+                            <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                    </form>
+                </div>
+                {% empty %}
+                <p style="text-align: center; color: var(--color-text-muted)">
+                    No items yet. Add one above!
+                </p>
+                {% endfor %}
+            </div>
+        </section>
 
-    <!-- Toast Script -->
-    <script>
-      {% if messages %}
-        const toast = document.getElementById("toast");
-        {% for message in messages %}
-          toast.textContent = "{{ message }}";
-          toast.classList.add("show");
-          setTimeout(() => toast.classList.remove("show"), 2500);
-        {% endfor %}
-      {% endif %}
-    </script>
-  </body>
+        <!-- Toast Container -->
+        <div id="toast"></div>
+
+        <!-- Toast Script -->
+        <script>
+            {% if messages %}
+              const toast = document.getElementById("toast");
+              {% for message in messages %}
+                toast.textContent = "{{ message }}";
+                toast.classList.add("show");
+                setTimeout(() => toast.classList.remove("show"), 2500);
+              {% endfor %}
+            {% endif %}
+        </script>
+    </body>
 </html>
