@@ -53,15 +53,15 @@ body {
     }
 }
 
+/* ---- Toast Notification ---- */
 #toast {
     position: fixed;
     bottom: 2rem;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--color-danger);
     color: white;
-    padding: 0.75rem 1.25rem;
-    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
     box-shadow: var(--shadow-md);
     opacity: 0;
     pointer-events: none;
@@ -69,10 +69,28 @@ body {
         opacity 0.4s ease,
         transform 0.4s ease;
     font-size: 0.9rem;
+    font-weight: 500;
     z-index: 999;
+    white-space: nowrap;
 }
 
 #toast.show {
     opacity: 1;
     transform: translateX(-50%) translateY(-20px);
+}
+
+#toast.success {
+    background: var(--color-success);
+}
+
+#toast.error {
+    background: var(--color-danger);
+}
+
+/* ---- Empty message ---- */
+.empty-msg {
+    text-align: center;
+    color: var(--color-text-muted);
+    padding: 2rem 0;
+    font-style: italic;
 }

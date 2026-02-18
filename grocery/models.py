@@ -11,3 +11,5 @@ class GroceryItem(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        verbose_name = 'Grocery Item'
+        verbose_name_plural = 'Grocery Items'

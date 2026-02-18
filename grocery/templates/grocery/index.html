@@ -32,6 +32,7 @@
         <section class="section-center">
             <!-- Form -->
             <form
+                class="grocery-form"
                 method="POST"
                 action="{% if edit_item %}{% url 'grocery:update' edit_item.id %}{% else %}{% url 'grocery:add' %}{% endif %}"
             >
@@ -44,13 +45,22 @@
                         class="form-input"
                         placeholder="e.g. eggs"
                         value="{{ edit_item.name|default:'' }}"
-                        {% if edit_item %}autofocus{% endif %} 
+                        {%
+                        if
+                        edit_item
+                        %}autofocus{%
+                        endif
+                        %}
                     />
                     <button type="submit" class="form-submit">
-                        {% if edit_item %} edit item {% else %} add item 
-                        {% endif %}
+                        {% if edit_item %}edit item{% else %}add item{% endif %}
                     </button>
                 </div>
+                {% if edit_item %}
+                <a href="{% url 'grocery:index' %}" class="cancel-edit-link">
+                    <i class="fa-solid fa-xmark"></i> Cancel editing
+                </a>
+                {% endif %}
             </form>
 
             <!-- Items List -->
@@ -79,14 +89,9 @@
                     </form>
 
                     <!-- Item Name -->
-                    <p
-                        style="text-decoration: {% if item.completed %}line-through{% else %}none{% endif %}"
-                    >
-                        {{ item.name }}
-                    </p>
+                    <p>{{ item.name }}</p>
 
-                    <!-- Edit Button (placeholder for now) -->
-
+                    <!-- Edit Button -->
                     <a
                         href="{% url 'grocery:edit' item.id %}"
                         title="Edit item"
@@ -106,31 +111,35 @@
                             type="submit"
                             class="btn icon-btn remove-btn"
                             title="Delete item"
+                            onclick="return confirm('Delete this item?');"
                         >
                             <i class="fa-regular fa-trash-can"></i>
                         </button>
                     </form>
                 </div>
                 {% empty %}
-                <p style="text-align: center; color: var(--color-text-muted)">
-                    No items yet. Add one above!
-                </p>
+                <p class="empty-msg">No items yet. Add one above!</p>
                 {% endfor %}
             </div>
         </section>
 
-        <!-- Toast Container -->
+        <!-- Toast Notification -->
         <div id="toast"></div>
 
         <!-- Toast Script -->
         <script>
             {% if messages %}
-              const toast = document.getElementById("toast");
-              {% for message in messages %}
-                toast.textContent = "{{ message }}";
-                toast.classList.add("show");
-                setTimeout(() => toast.classList.remove("show"), 2500);
-              {% endfor %}
+            const toast = document.getElementById("toast");
+            const msgs = [{% for message in messages %}{ text: "{{ message|escapejs }}", tags: "{{ message.tags }}" },{% endfor %}];
+            let delay = 0;
+            msgs.forEach(function(msg) {
+                setTimeout(function() {
+                    toast.textContent = msg.text;
+                    toast.className = "show " + (msg.tags.includes("success") ? "success" : "error");
+                    setTimeout(function() { toast.className = ""; }, 2500);
+                }, delay);
+                delay += 3000;
+            });
             {% endif %}
         </script>
     </body>
