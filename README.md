@@ -1,6 +1,6 @@
 # Grocery Bud - Django CRUD App
 
-A clean, minimal grocery list app built with Django featuring full CRUD functionality.
+A clean, minimal grocery list app built with pure Django featuring full CRUD functionality.
 
 ## Features
 - Add grocery items
