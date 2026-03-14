@@ -1,50 +1,53 @@
-# 🚀 Deploying Grocery Bud to Render — Full Guide
+# Deploying Grocery Bud to Railway — Full Guide
 
-This guide covers everything from preparing your code to getting your live URL.
+This guide covers everything from preparing your code to getting your live URL on Railway.
 
 ---
 
-## 📁 Files Added for Deployment
+## Files for Deployment
 
 ```
 CRUD_DJANGO/
-├── build.sh              ← Render runs this on every deploy
-├── render.yaml           ← Defines your services (Blueprint method)
-├── requirements.txt      ← Python dependencies
-├── .gitignore            ← Keeps git clean
+├── Procfile              <- Railway runs this to start the app
+├── runtime.txt           <- Pins the Python version
+├── requirements.txt      <- Python dependencies
+├── .env.example          <- Template for local environment variables
+├── .gitignore            <- Keeps git clean
 └── config/
-    └── settings.py       ← Updated for production (env vars, WhiteNoise, PostgreSQL)
+    └── settings.py       <- Updated for production (env vars, WhiteNoise, PostgreSQL)
 ```
 
 ---
 
-## STEP 1 — Install New Dependencies Locally
+## STEP 1 — Pre-Push Checklist
+
+Before pushing to GitHub, confirm the repository root contains:
+
+- `manage.py`
+- `requirements.txt`
+- `Procfile`
+- `runtime.txt`
+
+Confirm these are **not** committed:
+
+- `.env`
+- `db.sqlite3`
+
+Run the final local validation commands:
 
 ```bash
-pip install gunicorn whitenoise psycopg2-binary dj-database-url python-decouple
-
-# Freeze to requirements.txt
-pip freeze > requirements.txt
-```
-
-Your `requirements.txt` should contain at minimum:
-
-```
-django>=4.2,<5.0
-gunicorn==21.2.0
-whitenoise==6.6.0
-psycopg2-binary==2.9.9
-dj-database-url==2.1.0
-python-decouple==3.8
+python manage.py check
+python manage.py makemigrations --check
+python manage.py collectstatic --noinput
 ```
 
 ---
 
-## STEP 2 — Generate a Secret Key & Create `.env`
+## STEP 2 — Generate a Secret Key and Create `.env`
 
-### First, generate your secret key
+### Generate your secret key
 
-Run **one** of these in your terminal:
+Run one of these in your terminal:
 
 **Option A — Using Django (recommended):**
 
@@ -52,271 +55,201 @@ Run **one** of these in your terminal:
 python manage.py shell -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 ```
 
-**Option B — Using Python only (no Django needed):**
+**Option B — Using Python only:**
 
 ```bash
 python -c "import secrets; print(secrets.token_urlsafe(50))"
 ```
 
-Both will print something like:
+### Create your `.env` file
 
-```
-3t@!kx8v$2mn#q7&zp6w*yj0_r4ld5oe^gcfhib1auts9nxm
-```
-
-**Option C — Auto-create the entire `.env` file in one command:**
+Copy the example and fill in your key:
 
 ```bash
-python -c "
-from django.core.management.utils import get_random_secret_key
-key = get_random_secret_key()
-with open('.env', 'w') as f:
-    f.write(f'SECRET_KEY={key}\n')
-    f.write('DEBUG=True\n')
-    f.write('ALLOWED_HOSTS=127.0.0.1,localhost\n')
-    f.write('DATABASE_URL=sqlite:///db.sqlite3\n')
-print('✅ .env created! Secret key:', key)
-"
+cp .env.example .env
 ```
 
----
+Then edit `.env` and paste your generated key into `SECRET_KEY=`.
 
-### Then create your `.env` file
-
-Create `.env` in your project root and paste in your generated key:
+Your `.env` for local development should look like:
 
 ```env
-SECRET_KEY=3t@!kx8v$2mn#q7&zp6w*yj0_r4ld5oe^gcfhib1auts9nxm
+SECRET_KEY=<your-generated-key>
 DEBUG=True
 ALLOWED_HOSTS=127.0.0.1,localhost
 DATABASE_URL=sqlite:///db.sqlite3
+CSRF_TRUSTED_ORIGINS=http://127.0.0.1:8000,http://localhost:8000
 ```
 
-> ✅ `python-decouple` reads this `.env` file automatically when running locally.  
-> ✅ When deployed to Render, it uses environment variables from the dashboard instead — you don't need a `.env` file there.  
-> ⚠️ **Never commit `.env` to GitHub** — your `.gitignore` already excludes it.  
-> ⚠️ Use a **different key** for local vs. production. Render auto-generates the production key via `generateValue: true` in `render.yaml`.
+> `python-decouple` reads this `.env` file automatically when running locally.
+> When deployed to Railway, it uses environment variables from the dashboard instead.
+> **Never commit `.env` to GitHub** — your `.gitignore` already excludes it.
+> Use a **different key** for local vs. production.
 
 ---
 
-## STEP 3 — Updated `config/settings.py`
+## STEP 3 — Push to GitHub
 
-The settings file now uses **environment variables** for everything sensitive:
-
-```python
-from pathlib import Path
-import dj_database_url
-from decouple import config, Csv
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
-
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'grocery',
-]
-
-MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # ← Must be 2nd
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
-
-ROOT_URLCONF = 'config.urls'
-
-TEMPLATES = [{
-    'BACKEND': 'django.template.backends.django.DjangoTemplates',
-    'DIRS': [],
-    'APP_DIRS': True,
-    'OPTIONS': {
-        'context_processors': [
-            'django.template.context_processors.debug',
-            'django.template.context_processors.request',
-            'django.contrib.auth.context_processors.auth',
-            'django.contrib.messages.context_processors.messages',
-        ],
-    },
-}]
-
-WSGI_APPLICATION = 'config.wsgi.application'
-
-# ─── Database ─────────────────────────────────────────────────────────────────
-DATABASE_URL = config('DATABASE_URL', default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
-DATABASES = {
-    'default': dj_database_url.parse(DATABASE_URL)
-}
-
-# ─── Static Files ─────────────────────────────────────────────────────────────
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-```
-
----
-
-## STEP 4 — Create `build.sh`
-
-This script runs automatically on every Render deploy:
+If the repository is not connected yet:
 
 ```bash
-#!/usr/bin/env bash
-set -o errexit       # Exit immediately if any command fails
-
-pip install -r requirements.txt
-
-python manage.py collectstatic --no-input
-
-python manage.py migrate
-```
-
-Make it executable:
-
-```bash
-chmod +x build.sh
-```
-
----
-
-## STEP 5 — Create `render.yaml` (Blueprint)
-
-This file lets Render auto-configure both your web service and database:
-
-```yaml
-databases:
-  - name: grocery-db
-    databaseName: grocery_bud
-    user: grocery_user
-    plan: free
-
-services:
-  - type: web
-    name: grocery-bud
-    env: python
-    plan: free
-    buildCommand: "./build.sh"
-    startCommand: "gunicorn config.wsgi:application"
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: grocery-db
-          property: connectionString
-      - key: SECRET_KEY
-        generateValue: true
-      - key: DEBUG
-        value: false
-      - key: ALLOWED_HOSTS
-        value: ".onrender.com"
-      - key: PYTHON_VERSION
-        value: "3.12.0"
-```
-
----
-
-## STEP 6 — Push to GitHub
-
-```bash
-# Initialize git (if not done already)
 git init
-git add .
-git commit -m "Initial commit — ready for Render deployment"
-
-# Create a repo on GitHub, then:
-git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
 git branch -M main
+git add .
+git commit -m "Prepare Railway deployment"
+git remote add origin https://github.com/<your-username>/<your-repository>.git
 git push -u origin main
 ```
 
-> ⚠️ Make sure `.gitignore` excludes `venv/`, `.env`, and `db.sqlite3`
+If the repository already exists:
+
+```bash
+git add .
+git commit -m "Switch deployment from Render to Railway"
+git push origin main
+```
 
 ---
 
-## STEP 7 — Deploy on Render
+## STEP 4 — Create the Railway Project
 
-### Option A — Blueprint (Recommended, Automatic)
-
-1. Go to [https://render.com](https://render.com) and log in
-2. Click **New +** → **Blueprint**
-3. Connect your GitHub account and select your repository
-4. Render will detect `render.yaml` and create both the **database** and **web service** automatically
-5. Click **Apply**
-6. Wait ~3–5 minutes for the build to finish
-7. Click the generated `.onrender.com` URL — your app is live! 🎉
+1. Open [Railway](https://railway.com).
+2. Click **New Project**.
+3. Choose **Deploy from GitHub repo**.
+4. Select this repository.
+5. Railway will create a web service for the Django app.
 
 ---
 
-### Option B — Manual (Dashboard)
+## STEP 5 — Provision PostgreSQL
 
-**First, create the PostgreSQL database:**
-
-1. Click **New +** → **PostgreSQL**
-2. Name: `grocery-db`, Region: `Oregon` (or nearest), Plan: `Free`
-3. Click **Create Database**
-4. Wait until status shows **Available**
-5. Copy the **Internal Database URL** from the Connections section
-
-**Then, create the web service:**
-
-1. Click **New +** → **Web Service**
-2. Connect your GitHub repo
-3. Fill in the settings:
-
-| Field         | Value                              |
-| ------------- | ---------------------------------- |
-| Name          | `grocery-bud`                      |
-| Runtime       | `Python 3`                         |
-| Build Command | `./build.sh`                       |
-| Start Command | `gunicorn config.wsgi:application` |
-| Plan          | `Free`                             |
-
-4. In the **Environment Variables** section, add:
-
-| Key              | Value                                             |
-| ---------------- | ------------------------------------------------- |
-| `SECRET_KEY`     | Click "Generate" for a random value               |
-| `DEBUG`          | `false`                                           |
-| `ALLOWED_HOSTS`  | `.onrender.com`                                   |
-| `DATABASE_URL`   | Paste the Internal Database URL from step 5 above |
-| `PYTHON_VERSION` | `3.11.0`                                          |
-
-5. Click **Create Web Service**
-6. Watch the build logs — it should end with `==> Your service is live 🎉`
+1. In the same Railway project, click **New** and add a **PostgreSQL** service.
+2. Wait until Railway provisions the database.
+3. Open the PostgreSQL service and confirm that `DATABASE_URL` is available.
 
 ---
 
-## STEP 8 — Create a Superuser (Admin Access)
+## STEP 6 — Configure Railway Environment Variables
 
-After deployment, use the Render Shell to create an admin account:
+Open the Django web service and add these variables:
 
-1. In your web service dashboard, click **Shell**
-2. Run:
+```env
+SECRET_KEY=<paste-a-new-random-secret>
+DEBUG=false
+ALLOWED_HOSTS=<your-service>.up.railway.app,.railway.app
+CSRF_TRUSTED_ORIGINS=https://<your-service>.up.railway.app
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+DB_CONN_MAX_AGE=600
+DB_SSL_REQUIRE=True
+DJANGO_SECURE_SSL_REDIRECT=True
+DJANGO_SECURE_HSTS_SECONDS=31536000
+DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS=True
+DJANGO_SECURE_HSTS_PRELOAD=True
+```
+
+Important notes:
+
+- `DATABASE_URL` is required — the app will fall back to SQLite if missing, which is wrong for production.
+- `SECRET_KEY` is required — the app will crash on startup without it.
+- `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` should match the final Railway public domain.
+- Use `${{Postgres.DATABASE_URL}}` to reference the Railway PostgreSQL service variable.
+
+---
+
+## STEP 7 — What Railway Will Run Automatically
+
+Railway uses these root files during deployment.
+
+### requirements.txt
+
+Railway detects this file and runs `pip install -r requirements.txt` automatically.
+
+### Procfile
+
+```procfile
+web: python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --log-file -
+```
+
+This collects static files and starts Gunicorn on every deploy.
+
+### runtime.txt
+
+```txt
+python-3.12.3
+```
+
+---
+
+## STEP 8 — First Deployment Log Check
+
+After the first deploy, inspect the deployment logs and confirm:
+
+- Dependencies installed successfully.
+- `collectstatic` completed successfully.
+- Gunicorn started without import errors.
+- There is no `UndefinedValueError` for `SECRET_KEY` or `DATABASE_URL`.
+- There is no static manifest error from WhiteNoise startup.
+
+---
+
+## STEP 9 — Run Migrations
+
+After the application deploys successfully, run the database setup inside the Railway web service environment.
+
+### Option A: Railway Dashboard Shell
+
+1. Open the web service.
+2. Open the latest deployment.
+3. Open the service shell.
+4. Run:
+
+```bash
+python manage.py migrate
+```
+
+### Option B: Railway CLI
+
+Install Railway CLI, log in, then run:
+
+```bash
+railway login
+railway link
+railway shell
+python manage.py migrate
+exit
+```
+
+---
+
+## STEP 10 — Create a Superuser (Admin Access)
+
+In the Railway shell, create an admin account:
 
 ```bash
 python manage.py createsuperuser
 ```
 
-3. Enter a username, email, and password
-4. Visit `https://YOUR-APP.onrender.com/admin` to log in
+Enter a username, email, and password. Then visit `https://<your-service>.up.railway.app/admin` to log in.
 
 ---
 
-## 🔄 Auto-Deploys
+## STEP 11 — Post-Deploy Verification Checklist
 
-Render automatically redeploys your app every time you push to `main`:
+Verify all of the following in production:
+
+1. The home page loads on the Railway public domain.
+2. You can add a grocery item.
+3. You can edit a grocery item.
+4. You can delete a grocery item.
+5. Toast messages appear correctly.
+6. Static assets (CSS, favicon) load correctly.
+7. Admin panel is accessible and functional.
+
+---
+
+## STEP 12 — Auto-Deploys
+
+Railway automatically redeploys your app every time you push to `main`:
 
 ```bash
 git add .
@@ -324,36 +257,32 @@ git commit -m "Update something"
 git push
 ```
 
-That's it — Render picks it up and deploys within minutes.
+Railway picks it up and deploys within minutes.
 
 ---
 
-## ⚠️ Free Tier Limitations
+## Troubleshooting
 
-| Limitation             | Details                                                         |
-| ---------------------- | --------------------------------------------------------------- |
-| Sleep after inactivity | Web service sleeps after 15 min of no traffic (cold start ~30s) |
-| PostgreSQL expiry      | Free databases are deleted after **90 days**                    |
-| Storage                | 1 GB for the free PostgreSQL database                           |
-| Bandwidth              | 100 GB/month                                                    |
+**App crashes on boot**
+- Check that `SECRET_KEY` is set in Railway environment variables.
+- Check that `DATABASE_URL` is mapped from the PostgreSQL service.
+- Check that `ALLOWED_HOSTS` matches the Railway hostname.
 
-To avoid sleep, consider upgrading to the Starter plan ($7/month) or use a service like UptimeRobot to ping your app every 14 minutes.
+**CSRF failure on forms**
+- Check that `CSRF_TRUSTED_ORIGINS` contains the full `https://...` origin.
+- Make sure you are using the final Railway public URL, not an old preview URL.
 
----
+**Static files return 404**
+- Check that `whitenoise` is installed.
+- Check that `collectstatic` succeeded in the deployment logs.
+- Check there is no manifest generation error during startup.
 
-## 🐛 Troubleshooting
+**`DisallowedHost` error**
+- Make sure `ALLOWED_HOSTS` env var includes `.railway.app` (note the leading dot).
 
-**Build fails with `ModuleNotFoundError`**  
-→ Check that `requirements.txt` includes all packages. Run `pip freeze > requirements.txt` locally and push again.
+**500 error on first load**
+- Check if migrations ran. In the Railway shell: `python manage.py migrate`
 
-**`DisallowedHost` error**  
-→ Make sure `ALLOWED_HOSTS` env var is set to `.onrender.com` (note the leading dot).
-
-**Static files (CSS) not loading**  
-→ Ensure `whitenoise.middleware.WhiteNoiseMiddleware` is in `MIDDLEWARE` as the **2nd entry**, and `STATIC_ROOT` is set. The `build.sh` must run `collectstatic`.
-
-**500 error on first load**  
-→ Check if migrations ran. In the Render Shell: `python manage.py migrate`
-
-**Database connection error**  
-→ Make sure `DATABASE_URL` is set to the **Internal** URL (not external) in your Render environment variables.
+**Database connection error**
+- Make sure `DATABASE_URL` is set and references the Railway PostgreSQL service.
+- If using `DB_SSL_REQUIRE=True`, ensure the database supports SSL connections.

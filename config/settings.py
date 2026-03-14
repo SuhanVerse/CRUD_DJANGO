@@ -10,6 +10,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS', default='', cast=Csv()
+)
+
+# ─── Production Security (Railway) ──────────────────────────────────────────
+SECURE_SSL_REDIRECT = config(
+    'DJANGO_SECURE_SSL_REDIRECT', default=False, cast=bool)
+SECURE_HSTS_SECONDS = config('DJANGO_SECURE_HSTS_SECONDS', default=0, cast=int)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = config(
+    'DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS', default=False, cast=bool)
+SECURE_HSTS_PRELOAD = config(
+    'DJANGO_SECURE_HSTS_PRELOAD', default=False, cast=bool)
 
 # ─── Applications ─────────────────────────────────────────────────────────────
 INSTALLED_APPS = [
@@ -54,11 +66,15 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # ─── Database ─────────────────────────────────────────────────────────────────
-# Uses DATABASE_URL env var on Render (PostgreSQL), falls back to SQLite locally
+# Uses DATABASE_URL env var on Railway (PostgreSQL), falls back to SQLite locally
 DATABASE_URL = config(
     'DATABASE_URL', default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
 DATABASES = {
-    'default': dj_database_url.parse(DATABASE_URL)
+    'default': dj_database_url.parse(
+        DATABASE_URL,
+        conn_max_age=config('DB_CONN_MAX_AGE', default=0, cast=int),
+        ssl_require=config('DB_SSL_REQUIRE', default=False, cast=bool),
+    )
 }
 
 # ─── Password Validation ──────────────────────────────────────────────────────
