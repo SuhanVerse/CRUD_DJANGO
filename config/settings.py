@@ -1,6 +1,5 @@
 from django.contrib.messages import constants as messages_constants
 from pathlib import Path
-import dj_database_url
 from decouple import config, Csv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -14,7 +13,7 @@ CSRF_TRUSTED_ORIGINS = config(
     'CSRF_TRUSTED_ORIGINS', default='', cast=Csv()
 )
 
-# ─── Production Security (Railway) ──────────────────────────────────────────
+# ─── Production Security (Render) ───────────────────────────────────────────
 SECURE_SSL_REDIRECT = config(
     'DJANGO_SECURE_SSL_REDIRECT', default=False, cast=bool)
 SECURE_HSTS_SECONDS = config('DJANGO_SECURE_HSTS_SECONDS', default=0, cast=int)
@@ -66,15 +65,11 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # ─── Database ─────────────────────────────────────────────────────────────────
-# Uses DATABASE_URL env var on Railway (PostgreSQL), falls back to SQLite locally
-DATABASE_URL = config(
-    'DATABASE_URL', default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
 DATABASES = {
-    'default': dj_database_url.parse(
-        DATABASE_URL,
-        conn_max_age=config('DB_CONN_MAX_AGE', default=0, cast=int),
-        ssl_require=config('DB_SSL_REQUIRE', default=False, cast=bool),
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 # ─── Password Validation ──────────────────────────────────────────────────────
